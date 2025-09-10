@@ -67,7 +67,7 @@ graph TD
 ```bash
 aws ecr create-repository \
   --repository-name arabic-recognition-app \
-  --region us-east-1
+  --region eu-west-1
 ```
 
 #### 2. ECS Cluster
@@ -82,7 +82,7 @@ aws ecs create-cluster \
 ```bash
 aws logs create-log-group \
   --log-group-name /ecs/arabic-recognition-app \
-  --region us-east-1
+  --region eu-west-1
 ```
 
 #### 4. IAM Roles
@@ -206,7 +206,7 @@ env:
   ECS_SERVICE: arabic-recognition-service  
   ECS_CLUSTER: arabic-recognition-cluster
   ECS_TASK_DEFINITION: arabic-recognition-task
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-west-1
 ```
 
 ### Trigger Conditions

@@ -80,7 +80,7 @@ env:
   ECS_SERVICE: arabic-recognition-service
   ECS_CLUSTER: arabic-recognition-cluster
   ECS_TASK_DEFINITION: arabic-recognition-task
-  AWS_REGION: us-east-1
+  AWS_REGION: eu-west-1
 ```
 
 ### Test Matrix

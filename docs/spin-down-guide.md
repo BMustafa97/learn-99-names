@@ -165,7 +165,7 @@ aws iam list-roles --query 'Roles[?contains(RoleName, `ecs`)]'
 Edit the script variables at the top:
 ```bash
 # Configuration
-AWS_REGION="us-east-1"
+AWS_REGION="eu-west-1"
 ECR_REPOSITORY="arabic-recognition-app"
 ECS_CLUSTER="arabic-recognition-cluster"
 ECS_SERVICE="arabic-recognition-service"

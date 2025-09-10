@@ -163,7 +163,7 @@ Your AWS user/role needs permissions for:
 
 All scripts use these default settings:
 ```bash
-AWS_REGION="us-east-1"
+AWS_REGION="eu-west-1"
 ECR_REPOSITORY="arabic-recognition-app"
 ECS_CLUSTER="arabic-recognition-cluster"
 ECS_SERVICE="arabic-recognition-service"
@@ -230,7 +230,7 @@ aws configure
 # Or set environment variables
 export AWS_ACCESS_KEY_ID="your-key"
 export AWS_SECRET_ACCESS_KEY="your-secret"
-export AWS_DEFAULT_REGION="us-east-1"
+export AWS_DEFAULT_REGION="eu-west-1"
 ```
 
 ### Getting Help

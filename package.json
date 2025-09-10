@@ -1,0 +1,26 @@
+{
+  "name": "arabic-recognition-app",
+  "version": "1.0.0",
+  "description": "A simple application that leverages the quranic-universal-library to provide access to Quranic text and metadata with Arabic speech recognition",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "npx http-server src -p 3000 -o",
+    "dev": "npx http-server src -p 3000 -o -c-1",
+    "install-quranic": "npm install quranic-universal-library"
+  },
+  "keywords": [
+    "arabic",
+    "speech-recognition",
+    "quran",
+    "quranic-universal-library",
+    "web-speech-api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "quranic-universal-library": "^1.0.0"
+  }
+}

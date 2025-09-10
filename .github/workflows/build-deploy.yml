@@ -1,0 +1,299 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even on non-main branch'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  ECR_REPOSITORY: arabic-recognition-app
+  ECS_SERVICE: arabic-recognition-service
+  ECS_CLUSTER: arabic-recognition-cluster
+  ECS_TASK_DEFINITION: arabic-recognition-task
+  AWS_REGION: eu-west-1
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-needed: ${{ steps.changes.outputs.deploy-needed }}
+      image-tag: ${{ steps.meta.outputs.image-tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for deployment changes
+        id: changes
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.event.inputs.force_deploy }}" == "true" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "deploy-needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy-needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate image metadata
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            IMAGE_TAG=${GITHUB_REF#refs/tags/}
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            IMAGE_TAG="latest"
+          else
+            IMAGE_TAG="pr-${{ github.event.number }}"
+          fi
+          echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "Image tag will be: ${IMAGE_TAG}"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: changes
+    outputs:
+      image-uri: ${{ steps.build-image.outputs.image }}
+      image-digest: ${{ steps.build-image.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies and generate lockfile
+        run: |
+          npm ci || npm install
+          # Ensure package-lock.json exists for Docker build
+          test -f package-lock.json
+
+      - name: Run pre-build tests
+        run: |
+          # Quick smoke test
+          echo "Running pre-build validation..."
+          
+          # Validate package.json structure
+          node -e "require('./package.json')"
+          
+          # Check if main files exist
+          test -f src/index.html
+          test -f src/learn-names.js
+          
+          echo "Pre-build validation passed"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        if: needs.changes.outputs.deploy-needed == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: needs.changes.outputs.deploy-needed == 'true'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and test Docker image locally
+        run: |
+          # Build the image
+          docker build -t ${{ env.ECR_REPOSITORY }}:test .
+          
+          # Test the image
+          docker run -d --name test-container -p 3000:3000 ${{ env.ECR_REPOSITORY }}:test
+          
+          # Wait for container to start
+          sleep 10
+          
+          # Health check
+          for i in {1..12}; do
+            if curl -f http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Container health check passed"
+              break
+            fi
+            echo "Waiting for container to be ready... ($i/12)"
+            sleep 5
+          done
+          
+          # Verify the response
+          curl -f http://localhost:3000/ || exit 1
+          
+          # Check container logs
+          docker logs test-container
+          
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
+
+      - name: Run Docker Compose integration test
+        run: |
+          # Test with docker compose (V2)
+          docker compose up -d
+          
+          # Wait for services to be ready
+          sleep 15
+          
+          # Health check via compose
+          for i in {1..10}; do
+            if docker compose ps | grep -q "healthy\|Up"; then
+              echo "Docker Compose services are healthy"
+              break
+            fi
+            echo "Waiting for Docker Compose services... ($i/10)"
+            sleep 5
+          done
+          
+          # Test endpoint
+          curl -f http://localhost:3000/ || exit 1
+          echo "Docker Compose integration test passed"
+          
+          # Cleanup
+          docker compose down
+
+      - name: Build and push to ECR
+        if: needs.changes.outputs.deploy-needed == 'true'
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.changes.outputs.image-tag }}
+        run: |
+          # Build and tag image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Push images
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # Output image URI and digest
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || echo "")
+          
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
+          echo "Image pushed: $IMAGE_URI"
+
+      - name: Run security scan on pushed image
+        if: needs.changes.outputs.deploy-needed == 'true'
+        continue-on-error: true
+        run: |
+          # Run Trivy scan on the pushed image
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL \
+            ${{ steps.build-image.outputs.image }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [changes, build]
+    if: needs.changes.outputs.deploy-needed == 'true' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --query taskDefinition > task-definition.json
+
+      - name: Update task definition with new image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ECR_REPOSITORY }}
+          image: ${{ needs.build.outputs.image-uri }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+          
+          # Get service details
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].{Status:status,RunningCount:runningCount,DesiredCount:desiredCount}'
+          
+          # Check if service is running with desired count
+          RUNNING_COUNT=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].runningCount')
+          
+          DESIRED_COUNT=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].desiredCount')
+          
+          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ]; then
+            echo "✅ Deployment successful! Running: $RUNNING_COUNT, Desired: $DESIRED_COUNT"
+          else
+            echo "❌ Deployment failed! Running: $RUNNING_COUNT, Desired: $DESIRED_COUNT"
+            exit 1
+          fi
+
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ needs.build.outputs.image-uri }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Cluster:** \`${{ env.ECS_CLUSTER }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Service:** \`${{ env.ECS_SERVICE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** \`${{ env.AWS_REGION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Deployment completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [changes, build, deploy]
+    if: always() && needs.changes.outputs.deploy-needed == 'true'
+
+    steps:
+      - name: Deployment notification
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "✅ Deployment to production completed successfully"
+            echo "Image: ${{ needs.build.outputs.image-uri }}"
+            echo "Commit: ${{ github.sha }}"
+          elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
+            echo "❌ Deployment to production failed"
+            echo "Please check the logs and try again"
+          elif [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "❌ Build failed"
+            echo "Please check the build logs"
+          else
+            echo "ℹ️ Build completed but deployment was skipped"
+            echo "Branch: ${{ github.ref }}"
+          fi

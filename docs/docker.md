@@ -2,6 +2,14 @@
 
 Complete guide for containerizing and deploying the Arabic Recognition App using Docker.
 
+## ⚡ Recent Updates
+
+**Docker Setup Fixed (September 2025)**
+- Fixed `npm ci` issue by generating proper `package-lock.json`
+- Moved `http-server` from devDependencies to dependencies for production use
+- Updated docker-compose.yml to remove deprecated version field
+- Added comprehensive troubleshooting for common Docker build issues
+
 ## 🐳 Docker Overview
 
 This application can be containerized using Docker for consistent deployment across different environments. The Docker setup includes:
@@ -30,13 +38,32 @@ docker --version
 docker-compose --version
 ```
 
+### Project Setup
+Before building the Docker image, ensure you have a `package-lock.json` file:
+
+```bash
+# Navigate to project directory
+cd learn-99-names
+
+# Install dependencies to generate package-lock.json
+npm install
+
+# Verify package-lock.json exists
+ls -la package-lock.json
+```
+
+**Note**: The project requires `http-server` as a dependency to serve the static files. This is automatically included when you run `npm install`.
+
 ## 🚀 Quick Start
 
 ### Option 1: Docker Compose (Recommended)
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/arabic-recognition-app.git
-cd arabic-recognition-app
+git clone https://github.com/BMustafa97/learn-99-names.git
+cd learn-99-names
+
+# Generate package-lock.json (required for Docker build)
+npm install
 
 # Build and start the application
 docker-compose up -d
@@ -50,6 +77,12 @@ open http://localhost:3000
 
 ### Option 2: Docker Commands
 ```bash
+# Ensure you're in the project directory
+cd learn-99-names
+
+# Generate package-lock.json (if not already done)
+npm install
+
 # Build the image
 docker build -t arabic-recognition-app .
 
@@ -95,51 +128,67 @@ docker run -v /host/data:/app/data arabic-recognition-app
 
 ### Dockerfile
 ```dockerfile
-# Multi-stage build for optimization
+# Use official Node.js runtime as base image
 FROM node:18-alpine
 
-# Security: Non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S appuser -u 1001
-
-# Application setup
+# Set working directory in container
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
 
-# Copy source and set permissions
+# Copy package.json and package-lock.json (if available)
+COPY package*.json ./
+
+# Install dependencies (including http-server)
+RUN npm ci
+
+# Copy application source code
 COPY src/ ./src/
 COPY docs/ ./docs/
 COPY README.md ./
+
+# Create a non-root user to run the application
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S appuser -u 1001
+
+# Change ownership of the app directory to the non-root user
 RUN chown -R appuser:nodejs /app
 USER appuser
 
-# Health monitoring
+# Expose port 3000
+EXPOSE 3000
+
+# Health check to ensure the application is running
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Runtime
-EXPOSE 3000
+# Start the application
 CMD ["npm", "start"]
 ```
 
 ### Docker Compose
 ```yaml
-version: '3.8'
-
 services:
   arabic-recognition-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arabic-recognition-app
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+    networks:
+      - app-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
+
+networks:
+  app-network:
+    driver: bridge
 ```
 
 ## 🛠️ Development Workflow
@@ -323,6 +372,23 @@ docker system prune -a
 ## 🛠️ Troubleshooting
 
 ### Common Issues
+
+#### npm ci Fails - Missing package-lock.json
+```bash
+# Error: npm ci command can only install with an existing package-lock.json
+# Solution: Generate package-lock.json first
+npm install
+
+# Then rebuild Docker image
+docker build -t arabic-recognition-app .
+```
+
+#### Missing http-server Error
+```bash
+# Error: 'http-server' command not found in container
+# Solution: Ensure http-server is in dependencies (not devDependencies)
+# Check package.json and move http-server to dependencies section if needed
+```
 
 #### Container Won't Start
 ```bash

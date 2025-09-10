@@ -28,8 +28,8 @@ This is a web application that combines Arabic speech recognition with the [`qur
 1. Clone this repository:
 
     ```bash
-    git clone https://github.com/BMustafa97/arabic-recognition-app.git
-    cd arabic-recognition-app
+    git clone https://github.com/BMustafa97/learn-99-names.git
+    cd src
     ```
 
 2. Install dependencies:

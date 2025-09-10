@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arabic Recognition App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Arabic Speech Recognition App</h1>
+        <p>Click the button below to start speaking in Arabic. The app will recognize your speech and display the text.</p>
+        
+        <nav class="navigation">
+            <a href="learn-99-names.html" class="nav-link">📚 Learn 99 Names of Allah</a>
+        </nav>
+        
+        <div class="controls">
+            <button id="startBtn" class="btn btn-start">🎤 Start Recognition</button>
+            <button id="stopBtn" class="btn btn-stop" disabled>⏹️ Stop Recognition</button>
+            <button id="clearBtn" class="btn btn-clear">🗑️ Clear Text</button>
+        </div>
+        
+        <div class="status">
+            <p id="status">Ready to listen...</p>
+        </div>
+        
+        <div class="results">
+            <h3>Recognized Text:</h3>
+            <div id="recognizedText" class="text-display" dir="rtl">
+                <!-- Recognized Arabic text will appear here -->
+            </div>
+        </div>
+        
+        <div class="quranic-results">
+            <h3>Quranic Search Results:</h3>
+            <div id="quranicResults" class="text-display">
+                <!-- Quranic search results will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

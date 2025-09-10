@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn 99 Names of Allah - Arabic Recognition App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="learn-names.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>تعلم أسماء الله الحسنى</h1>
+            <h2>Learn the 99 Beautiful Names of Allah</h2>
+            <p>Master all 99 names with our structured learning approach. Practice pronunciation and track your progress.</p>
+            <nav>
+                <a href="index.html" class="nav-link">← Back to Speech Recognition</a>
+            </nav>
+        </header>
+
+        <div class="learning-strategy">
+            <div class="strategy-header">
+                <h3>📚 Learning Strategy</h3>
+                <p>Our systematic approach helps you master the 99 names effectively:</p>
+            </div>
+            
+            <div class="strategy-levels">
+                <div class="level-card beginner">
+                    <div class="level-icon">🌱</div>
+                    <div class="level-title">Beginner (Names 1-33)</div>
+                    <div class="level-description">Start with the most commonly known names</div>
+                    <div class="level-target">Target: 70% accuracy</div>
+                </div>
+                
+                <div class="level-card intermediate">
+                    <div class="level-icon">🌿</div>
+                    <div class="level-title">Intermediate (Names 34-66)</div>
+                    <div class="level-description">Build on your foundation with more names</div>
+                    <div class="level-target">Target: 75% accuracy</div>
+                </div>
+                
+                <div class="level-card advanced">
+                    <div class="level-icon">🌳</div>
+                    <div class="level-title">Advanced (Names 67-99)</div>
+                    <div class="level-description">Master the complete collection</div>
+                    <div class="level-target">Target: 80% accuracy</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-overview">
+            <h3>📊 Overall Progress</h3>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="overallProgress"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="completedNames">0</span> of 99 names mastered (<span id="progressPercentage">0</span>%)
+                </div>
+            </div>
+            
+            <div class="level-progress">
+                <div class="level-progress-item">
+                    <span class="level-label">Beginner:</span>
+                    <div class="mini-progress">
+                        <div class="mini-progress-fill" id="beginnerProgress"></div>
+                    </div>
+                    <span id="beginnerCount">0/33</span>
+                </div>
+                
+                <div class="level-progress-item">
+                    <span class="level-label">Intermediate:</span>
+                    <div class="mini-progress">
+                        <div class="mini-progress-fill" id="intermediateProgress"></div>
+                    </div>
+                    <span id="intermediateCount">0/33</span>
+                </div>
+                
+                <div class="level-progress-item">
+                    <span class="level-label">Advanced:</span>
+                    <div class="mini-progress">
+                        <div class="mini-progress-fill" id="advancedProgress"></div>
+                    </div>
+                    <span id="advancedCount">0/33</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="learning-controls">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Names</button>
+                <button class="filter-btn" data-filter="beginner">Beginner (1-33)</button>
+                <button class="filter-btn" data-filter="intermediate">Intermediate (34-66)</button>
+                <button class="filter-btn" data-filter="advanced">Advanced (67-99)</button>
+                <button class="filter-btn" data-filter="not-mastered">Need Practice</button>
+                <button class="filter-btn" data-filter="mastered">Mastered</button>
+            </div>
+            
+            <div class="learning-options">
+                <button id="practiceMode" class="option-btn">🎯 Practice Mode</button>
+                <button id="testMode" class="option-btn">📝 Test Mode</button>
+                <button id="resetProgress" class="option-btn danger">🔄 Reset Progress</button>
+            </div>
+        </div>
+
+        <div class="learning-section">
+            <div class="names-grid" id="namesGrid">
+                <!-- Names will be dynamically generated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="recognition-status">
+            <div id="status">Ready to practice. Click any practice button to start.</div>
+            <div id="recognizedText" class="recognition-result"></div>
+        </div>
+
+        <div class="progress-section">
+            <h3>📈 Your Learning Statistics</h3>
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalAttempts">0</span>
+                    <span class="stat-label">Total Attempts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="averageAccuracy">0%</span>
+                    <span class="stat-label">Average Accuracy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="bestScore">0%</span>
+                    <span class="stat-label">Best Score</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="currentStreak">0</span>
+                    <span class="stat-label">Current Streak</span>
+                </div>
+            </div>
+            
+            <div class="achievements">
+                <h4>🏆 Achievements</h4>
+                <div class="achievements-grid" id="achievementsGrid">
+                    <!-- Achievements will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="learn-names.js"></script>
+</body>
+</html>

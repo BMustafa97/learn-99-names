@@ -1,0 +1,563 @@
+/* Learn 99 Names - Additional Styles */
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.learning-strategy {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.strategy-header h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+    color: white;
+    border-bottom: none;
+}
+
+.strategy-header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+    margin-bottom: 25px;
+}
+
+.strategy-levels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.level-card {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.level-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.level-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.level-description {
+    font-size: 0.95em;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.level-target {
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.progress-overview {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.progress-overview h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+}
+
+.progress-container {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 25px;
+    background: #ecf0f1;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    border-radius: 15px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.level-progress {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.level-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.level-label {
+    font-weight: 600;
+    min-width: 90px;
+}
+
+.mini-progress {
+    flex: 1;
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mini-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+#beginnerProgress { background: linear-gradient(45deg, #f39c12, #e67e22); }
+#intermediateProgress { background: linear-gradient(45deg, #3498db, #2980b9); }
+#advancedProgress { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+
+.learning-controls {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 2px solid #3498db;
+    background: white;
+    color: #3498db;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background: #3498db;
+    color: white;
+}
+
+.learning-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+.option-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.option-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+.option-btn.danger {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+}
+
+.option-btn.danger:hover {
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.achievements {
+    margin-top: 20px;
+}
+
+.achievements h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.achievement-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.achievement-item.unlocked {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border-color: #f1c40f;
+    color: #8b4513;
+}
+
+.achievement-icon {
+    font-size: 2em;
+    margin-bottom: 8px;
+}
+
+.achievement-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.achievement-desc {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+header h1 {
+    font-size: 2.5em;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-family: 'Arabic Typesetting', 'Amiri', serif;
+    direction: rtl;
+}
+
+header h2 {
+    font-size: 1.8em;
+    color: #34495e;
+    margin-bottom: 15px;
+    font-weight: 300;
+}
+
+header p {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.learning-section {
+    margin-bottom: 40px;
+}
+
+.names-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.name-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.name-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.name-card.beginner {
+    border-left: 5px solid #f39c12;
+}
+
+.name-card.intermediate {
+    border-left: 5px solid #3498db;
+}
+
+.name-card.advanced {
+    border-left: 5px solid #9b59b6;
+}
+
+.name-card.mastered {
+    background: linear-gradient(135deg, #d5f4e6, #a8e6cf);
+    border-color: #27ae60;
+}
+
+.name-card.mastered::before {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #27ae60;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.name-card.hidden {
+    display: none;
+}
+
+.name-number {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin: 0 auto 15px;
+}
+
+.name-arabic {
+    font-size: 2.5em;
+    font-family: 'Arabic Typesetting', 'Amiri', serif;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    direction: rtl;
+    line-height: 1.2;
+}
+
+.name-transliteration {
+    font-size: 1.3em;
+    color: #34495e;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.name-meaning {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.practice-btn {
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    min-width: 150px;
+}
+
+.practice-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+.practice-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.practice-btn.listening {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    animation: pulse 1.5s infinite;
+}
+
+.accuracy-display {
+    min-height: 30px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.accuracy-excellent {
+    color: #27ae60;
+    background: #d5f4e6;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 2px solid #27ae60;
+}
+
+.accuracy-good {
+    color: #f39c12;
+    background: #fef9e7;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 2px solid #f39c12;
+}
+
+.accuracy-poor {
+    color: #e74c3c;
+    background: #fdf2f2;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 2px solid #e74c3c;
+}
+
+.recognition-status {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+#status {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.recognition-result {
+    font-size: 1.4em;
+    color: #34495e;
+    font-family: 'Arabic Typesetting', 'Amiri', serif;
+    direction: rtl;
+    min-height: 40px;
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+}
+
+.progress-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+}
+
+.progress-section h3 {
+    font-size: 1.8em;
+    margin-bottom: 25px;
+    color: white;
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    display: block;
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.status-error {
+    background-color: #fdf2f2 !important;
+    border-color: #e74c3c !important;
+    color: #c0392b !important;
+}
+
+.status-success {
+    background-color: #d5f4e6 !important;
+    border-color: #27ae60 !important;
+    color: #1e8449 !important;
+}
+
+.status-listening {
+    background-color: #e3f2fd !important;
+    border-color: #2196F3 !important;
+    color: #1565c0 !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .names-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .name-arabic {
+        font-size: 2em;
+    }
+    
+    .progress-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    header h2 {
+        font-size: 1.5em;
+    }
+}

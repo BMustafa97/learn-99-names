@@ -140,15 +140,15 @@ jobs:
 
       - name: Run Docker Compose integration test
         run: |
-          # Test with docker-compose
-          docker-compose up -d
+          # Test with docker compose (V2)
+          docker compose up -d
           
           # Wait for services to be ready
           sleep 15
           
           # Health check via compose
           for i in {1..10}; do
-            if docker-compose ps | grep -q "healthy\|Up"; then
+            if docker compose ps | grep -q "healthy\|Up"; then
               echo "Docker Compose services are healthy"
               break
             fi
@@ -161,7 +161,7 @@ jobs:
           echo "Docker Compose integration test passed"
           
           # Cleanup
-          docker-compose down
+          docker compose down
 
       - name: Build and push to ECR
         if: needs.changes.outputs.deploy-needed == 'true'

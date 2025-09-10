@@ -1,0 +1,251 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Package managers
+package-lock.json.backup
+yarn.lock.backup
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# AWS
+.aws/config
+.aws/credentials
+.aws/cli/
+.aws/sso/
+.aws/models/
+task-definition.json
+trust-policy.json
+
+# Docker
+.dockerignore.backup
+docker-compose.override.yml
+docker-compose.*.yml.backup
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Temporary folders
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+out/
+
+# Test outputs
+test-results/
+coverage/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Local development
+.env
+.env.local
+.env.*.local
+
+# AWS specific
+.aws/credentials
+.aws/config
+task-definition.json
+trust-policy.json
+
+# Docker specific
+docker-compose.override.yml
+
+# GitHub specific (if any local configs)
+.github/secrets/
+
+# Local scripts (if any contain sensitive data)
+scripts/local-*
+scripts/*.local.*
+
+# Temporary AWS files
+*.pem
+*.key
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Local environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Local development overrides
+docker-compose.local.yml
+docker-compose.dev.yml
+docker-compose.override.yml
+
+# AWS CLI temporary files
+.aws/cli/cache/
+.aws/cli/history
+
+# Temporary files from scripts
+scripts/temp/
+scripts/tmp/
+scripts/*.tmp
+
+# Log files from infrastructure scripts
+infrastructure-*.log
+setup-*.log
+deploy-*.log
+
+# Local testing files
+test-*.html
+test-*.js
+*.test.local.*
+
+# Backup files from editors
+*~
+*.backup
+*.bak
+*.swp
+*.swo
+
+# Archive files (unless intentionally included)
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# Compiled binaries (if any)
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Database files (if any local databases)
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+.parcel-cache/
+.webpack-cache/

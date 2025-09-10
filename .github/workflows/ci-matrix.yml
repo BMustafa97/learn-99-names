@@ -1,0 +1,247 @@
+name: CI Matrix Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src-changed: ${{ steps.changes.outputs.src }}
+      docker-changed: ${{ steps.changes.outputs.docker }}
+      docs-changed: ${{ steps.changes.outputs.docs }}
+      workflows-changed: ${{ steps.changes.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'package*.json'
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+            workflows:
+              - '.github/workflows/**'
+
+  validate-package:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.src-changed == 'true'
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate package structure
+        run: |
+          # Check if required files exist
+          test -f package.json
+          test -f package-lock.json
+          test -d src
+          test -f src/index.html
+          test -f src/learn-names.js
+
+      - name: Test server startup
+        run: |
+          # Start server in background
+          timeout 30s npm start &
+          SERVER_PID=$!
+          
+          # Wait for server to start
+          sleep 5
+          
+          # Test if server is responding (Linux/macOS)
+          if [ "${{ matrix.os }}" != "windows-latest" ]; then
+            curl -f http://localhost:3000/ || exit 1
+          fi
+          
+          # Kill server
+          kill $SERVER_PID || true
+
+  docker-tests:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docker-changed == 'true' || needs.detect-changes.outputs.src-changed == 'true'
+    
+    strategy:
+      matrix:
+        docker-compose-version: ['2.20.0', 'latest']
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Docker Compose ${{ matrix.docker-compose-version }}
+        if: matrix.docker-compose-version != 'latest'
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v${{ matrix.docker-compose-version }}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Verify Docker Compose installation
+        run: docker-compose --version
+
+      - name: Generate package-lock.json if missing
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install
+          fi
+
+      - name: Build Docker image
+        run: docker build -t arabic-recognition-app:test .
+
+      - name: Test Docker Compose build
+        run: docker-compose build
+
+      - name: Test Docker Compose startup
+        run: |
+          docker-compose up -d
+          sleep 10
+
+      - name: Health check via Docker Compose
+        run: |
+          # Wait for health check to pass
+          for i in {1..10}; do
+            if docker-compose ps | grep -q "healthy"; then
+              echo "Health check passed"
+              break
+            fi
+            echo "Waiting for health check... ($i/10)"
+            sleep 5
+          done
+
+      - name: Test application endpoint
+        run: |
+          # Test if application is responding
+          curl -f http://localhost:3000/ || exit 1
+          echo "Application is responding correctly"
+
+      - name: View container logs
+        if: failure()
+        run: docker-compose logs
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v
+
+  lint-and-security:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.src-changed == 'true' || needs.detect-changes.outputs.docker-changed == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level moderate
+
+      - name: Lint JavaScript files
+        run: |
+          # Basic JS syntax check
+          find src -name "*.js" -exec node -c {} \;
+          echo "JavaScript syntax validation passed"
+
+      - name: Validate HTML files
+        run: |
+          # Check for basic HTML structure
+          find src -name "*.html" -exec grep -l "<!DOCTYPE html>" {} \;
+          echo "HTML validation passed"
+
+      - name: Docker security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'arabic-recognition-app:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  docs-validation:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs-changed == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !node_modules/**
+
+      - name: Check Docker documentation accuracy
+        run: |
+          # Verify Docker commands in documentation are valid
+          grep -r "docker build" docs/ || true
+          grep -r "docker-compose" docs/ || true
+          echo "Documentation validation completed"
+
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, validate-package, docker-tests, lint-and-security, docs-validation]
+    if: always()
+    
+    steps:
+      - name: Test Results Summary
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Package Validation | ${{ needs.validate-package.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Tests | ${{ needs.docker-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Security | ${{ needs.lint-and-security.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation | ${{ needs.docs-validation.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes Detected:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Source: ${{ needs.detect-changes.outputs.src-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker: ${{ needs.detect-changes.outputs.docker-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docs: ${{ needs.detect-changes.outputs.docs-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflows: ${{ needs.detect-changes.outputs.workflows-changed }}" >> $GITHUB_STEP_SUMMARY

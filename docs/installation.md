@@ -25,7 +25,7 @@ Before installing the application, ensure you have the following:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/arabic-recognition-app.git
+git clone https://github.com/BMustafa97/learn-99-names.git
 cd arabic-recognition-app
 ```
 

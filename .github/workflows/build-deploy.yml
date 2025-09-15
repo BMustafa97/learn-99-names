@@ -212,83 +212,53 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Check and setup AWS infrastructure
+      - name: Check AWS infrastructure
         run: |
-          echo "🔍 Checking AWS infrastructure..."
+          echo "🔍 Checking AWS infrastructure exists..."
           
           # Check if ECR repository exists
-          if ! aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} >/dev/null 2>&1; then
-            echo "❌ ECR repository '${{ env.ECR_REPOSITORY }}' not found"
-            echo "🛠️ Creating ECR repository..."
-            aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }}
+          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} >/dev/null 2>&1; then
+            echo "✅ ECR repository '${{ env.ECR_REPOSITORY }}' exists"
           else
-            echo "✅ ECR repository exists"
+            echo "❌ ECR repository '${{ env.ECR_REPOSITORY }}' not found"
+            exit 1
+          fi
+          
+          # Check if Load Balancer exists
+          if aws elbv2 describe-load-balancers --names ${{ env.EC2_LOADBALANCER }} >/dev/null 2>&1; then
+            echo "✅ Load Balancer '${{ env.EC2_LOADBALANCER }}' exists"
+          else
+            echo "❌ Load Balancer '${{ env.EC2_LOADBALANCER }}' not found"
+            exit 1
           fi
           
           # Check if ECS cluster exists
-          if ! aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --query 'clusters[?status==`ACTIVE`]' | grep -q "${{ env.ECS_CLUSTER }}"; then
-            echo "❌ ECS cluster '${{ env.ECS_CLUSTER }}' not found"
-            echo "🛠️ Running infrastructure setup script..."
-            chmod +x ./scripts/setup-aws-infrastructure.sh
-            ./scripts/setup-aws-infrastructure.sh
+          if aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --query 'clusters[?status==`ACTIVE`]' | grep -q "${{ env.ECS_CLUSTER }}"; then
+            echo "✅ ECS cluster '${{ env.ECS_CLUSTER }}' exists"
           else
-            echo "✅ ECS cluster exists"
+            echo "❌ ECS cluster '${{ env.ECS_CLUSTER }}' not found or not active"
+            exit 1
+          fi
+          
+          # Check if ECS task definition exists
+          if aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} >/dev/null 2>&1; then
+            echo "✅ ECS task definition '${{ env.ECS_TASK_DEFINITION }}' exists"
+          else
+            echo "❌ ECS task definition '${{ env.ECS_TASK_DEFINITION }}' not found"
+            exit 1
           fi
           
           # Check if ECS service exists
           SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --query 'services[?status==`ACTIVE`]' --output text 2>/dev/null || echo "")
           
-          if [[ -z "$SERVICE_EXISTS" ]]; then
-            echo "❌ ECS service '${{ env.ECS_SERVICE }}' not found"
-            echo "�️ Creating ECS service..."
-            
-            # Get networking details
-            VPC_ID=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query 'Vpcs[0].VpcId' --output text)
-            SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query 'Subnets[0:2].SubnetId' --output text | tr '\t' ',' | tr '\n' ',')
-            SUBNET_IDS=${SUBNET_IDS%,}  # Remove trailing comma
-            
-            # Get security group
-            SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=arabic-recognition-sg" --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null)
-            
-            if [[ "$SG_ID" == "None" ]] || [[ -z "$SG_ID" ]]; then
-              echo "🛠️ Creating security group..."
-              SG_ID=$(aws ec2 create-security-group \
-                --group-name arabic-recognition-sg \
-                --description "Security group for Arabic Recognition App" \
-                --vpc-id $VPC_ID \
-                --query 'GroupId' --output text)
-              
-              # Allow HTTP traffic
-              aws ec2 authorize-security-group-ingress \
-                --group-id $SG_ID \
-                --protocol tcp \
-                --port 3000 \
-                --cidr 0.0.0.0/0
-            fi
-            
-            echo "� Network config - VPC: $VPC_ID, Subnets: $SUBNET_IDS, Security Group: $SG_ID"
-            
-            # Create the ECS service
-            aws ecs create-service \
-              --cluster ${{ env.ECS_CLUSTER }} \
-              --service-name ${{ env.ECS_SERVICE }} \
-              --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-              --desired-count 1 \
-              --launch-type FARGATE \
-              --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}" \
-              --enable-execute-command
-            
-            echo "✅ ECS service '${{ env.ECS_SERVICE }}' created successfully"
-            
-            # Wait for service to stabilize
-            echo "⏳ Waiting for service to reach stable state..."
-            aws ecs wait services-stable --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }}
-            echo "✅ Service is now stable"
+          if [[ -n "$SERVICE_EXISTS" ]]; then
+            echo "✅ ECS service '${{ env.ECS_SERVICE }}' exists and is active"
           else
-            echo "✅ ECS service exists"
+            echo "❌ ECS service '${{ env.ECS_SERVICE }}' not found or not active"
+            exit 1
           fi
           
-          echo "🎉 Infrastructure check completed"
+          echo "🎉 All required infrastructure exists"
 
       - name: Download current task definition
         run: |
@@ -301,7 +271,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.ECR_REPOSITORY }}
+          container-name: arabic-recognition
           image: ${{ needs.build.outputs.image-uri }}
 
       - name: Deploy to Amazon ECS

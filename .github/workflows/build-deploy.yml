@@ -16,9 +16,10 @@ on:
 
 env:
   ECR_REPOSITORY: arabic-recognition-app
-  ECS_SERVICE: arabic-recognition-service
-  ECS_CLUSTER: arabic-recognition-cluster
-  ECS_TASK_DEFINITION: arabic-recognition-task
+  ECS_SERVICE: arabic-recognition-app-dev-service
+  ECS_CLUSTER: arabic-recognition-app-dev-cluster
+  ECS_TASK_DEFINITION: arabic-recognition-app-dev-task
+  EC2_LOADBALANCER: arabic-recognition-app-dev-alb
   AWS_REGION: eu-west-1
 
 jobs:

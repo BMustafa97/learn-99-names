@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequential Recitation - 99 Names of Allah</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="learn-names.css">
+    <link rel="stylesheet" href="sequential-recitation.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>تلاوة أسماء الله الحسنى بالترتيب</h1>
+            <h2>Sequential Recitation of the 99 Names</h2>
+            <p>Recite all 99 names in order. The app will guide you and indicate any mistakes along the way.</p>
+            <nav>
+                <a href="index.html" class="nav-link">← Back to Speech Recognition</a>
+                <a href="learn-99-names.html" class="nav-link">📚 Learn Names</a>
+            </nav>
+        </header>
+
+        <div class="recitation-controls">
+            <div class="progress-info">
+                <!-- <h3>📊 Progress</h3> -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="recitationProgress"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="currentPosition">0</span> of 99 names completed (<span id="progressPercentage">0</span>%)
+                </div>
+                <div class="mistakes-count">
+                    <span class="mistake-icon">⚠️</span>
+                    <span id="mistakeCount">0</span> mistakes
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button id="startRecitation" class="btn btn-start">🎤 Start Recitation</button>
+                <button id="pauseRecitation" class="btn btn-pause" disabled>⏸️ Pause</button>
+                <button id="resetRecitation" class="btn btn-reset">🔄 Reset</button>
+                <button id="skipName" class="btn btn-skip" disabled>⏭️ Skip This Name</button>
+            </div>
+        </div>
+
+        <div class="recitation-display">
+            <div class="names-grid" id="namesGrid">
+                <!-- Names cards will be dynamically generated -->
+            </div>
+            
+            <div class="current-recitation-info">
+                <div class="listening-indicator" id="listeningIndicator">
+                    <div class="listening-text">🎤 Listening for name #<span id="currentNameNumber">1</span>...</div>
+                    <div class="listening-hint">Recite the next name in sequence</div>
+                </div>
+                
+                <div class="recognition-feedback" id="recognitionFeedback">
+                    <div class="feedback-text"></div>
+                </div>
+            </div>
+
+            <div class="recognized-display">
+                <h4>What you said:</h4>
+                <div class="recognized-text" id="recognizedText" dir="rtl"></div>
+            </div>
+        </div>
+
+        <div class="feedback-section">
+            <div class="feedback-message" id="feedbackMessage"></div>
+            <div class="mistake-indicator" id="mistakeIndicator">
+                <!-- Mistake feedback will appear here -->
+            </div>
+        </div>
+
+        <div class="recitation-history">
+            <h3>📝 Recitation History</h3>
+            <div class="history-list" id="historyList">
+                <!-- History items will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- <div class="help-section">
+            <h3>💡 How to Use</h3>
+            <div class="help-cards">
+                <div class="help-card">
+                    <div class="help-icon">🎯</div>
+                    <h4>Sequential Order</h4>
+                    <p>Recite the names in the correct order from 1 to 99</p>
+                </div>
+                <div class="help-card">
+                    <div class="help-icon">🔍</div>
+                    <h4>Visual Guidance</h4>
+                    <p>See the expected name in Arabic, transliteration, and meaning</p>
+                </div>
+                <div class="help-card">
+                    <div class="help-icon">⚠️</div>
+                    <h4>Mistake Detection</h4>
+                    <p>Get immediate feedback when you make pronunciation errors</p>
+                </div>
+                <div class="help-card">
+                    <div class="help-icon">📈</div>
+                    <h4>Progress Tracking</h4>
+                    <p>Track your progress and see your recitation history</p>
+                </div>
+            </div>
+        </div> -->
+    </div>
+    
+    <footer class="footer">
+        <br>
+        <div class="version" style="text-align: center; color: white;">v1.0.0</div>
+    </footer>
+
+    <script src="sequential-recitation.js"></script>
+</body>
+</html>

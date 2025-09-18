@@ -201,3 +201,17 @@ h3 {
         width: 200px;
     }
 }
+
+/* Footer styles */
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.version {
+    color: #999;
+    font-size: 0.9em;
+    font-weight: 500;
+}

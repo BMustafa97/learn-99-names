@@ -1,5 +1,10 @@
 # Arabic Recognition App
 
+> **Author:** Bilal Mustafa  
+> **Status:** 🚧 In Development  
+> **Last Updated:** 27-09-2025  
+> **Live URL:** [LIVE URL](https://p3nsmqm8we.eu-west-1.awsapprunner.com/)
+
 This is a web application that combines Arabic speech recognition with the [`quranic-universal-library`](https://github.com/TarteelAI/quranic-universal-library) GitHub library to provide access to Quranic text and metadata. The app allows users to speak in Arabic and have their speech recognized and processed.
 
 ## Features

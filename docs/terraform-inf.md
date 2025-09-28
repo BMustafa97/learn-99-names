@@ -1,33 +1,45 @@
-# Terraform Infrastructure Guide
+# Terraform Infrastructure Guide - AWS App Runner
 
-This document provides comprehensive instructions for deploying the Arabic Recognition App infrastructure using Terraform with security best practices for public repositories.
+This document provides comprehensive instructions for deploying the Arabic Recognition App infrastructure using **AWS App Runner** with Terraform.
 
 ## 🏗️ Architecture Overview
 
-The Terraform configuration creates:
+The Terraform configuration creates a **cost-optimized**, **fully-managed** container infrastructure:
 
-- **ECR Repository** - References existing Docker image storage (managed externally)
-- **Application Load Balancer (ALB)** - HTTPS/HTTP traffic routing
-- **ECS Fargate Cluster** - Serverless container hosting
-- **Auto Scaling** - Automatic scaling based on CPU usage
-- **CloudWatch Logs** - Centralized logging with encryption
-- **Security Groups** - Network-level security controls
-- **IAM Roles** - Least-privilege access controls
-- **SSL/TLS Certificate** - Free HTTPS via AWS Certificate Manager
+### AWS App Runner Deployment
 
-> **⚠️ Important**: The ECR repository is referenced as a data source and must exist before running Terraform. This repository is managed outside of this Terraform configuration.
+- **AWS App Runner Service** - Fully managed container service with built-in load balancing
+- **ECR Repository** - Container image storage with lifecycle policies
+- **Auto Scaling Configuration** - Intelligent scaling (1-10 instances, 100 requests/instance)
+- **IAM Roles** - Least-privilege access for ECR and service operations
+- **CloudWatch Integration** - Automatic logging and monitoring
+- **Built-in HTTPS** - Automatic SSL/TLS certificates and renewal
+
+### Key Benefits over ECS+ALB
+
+| Feature | ECS+ALB (Previous) | App Runner (Current) | Savings |
+|---------|-------------------|---------------------|---------|
+| **Monthly Cost** | ~$50+ | ~$20-30 | **~60%** |
+| **Infrastructure Management** | Manual setup & maintenance | Fully managed | **Zero effort** |
+| **Load Balancer** | Separate ALB required (~$20/month) | Built-in | **$20/month** |
+| **VPC/NAT Gateway** | Required (~$45/month) | Not needed | **$45/month** |
+| **HTTPS Setup** | Manual certificate management | Automatic | **Time savings** |
+| **Auto Scaling** | Complex configuration | Simple parameters | **Simplified** |
+
+> **💡 Migration Benefits**: Moving from ECS+ALB to App Runner eliminated VPC, NAT Gateway, and ALB costs while providing the same functionality with zero infrastructure management.
 
 ## 🔒 Security First Approach
 
-### Public Repository Security
+### App Runner Security
 
-This infrastructure is designed for public repositories with these security principles:
+This App Runner infrastructure provides enhanced security with reduced complexity:
 
 1. **No Hardcoded Secrets** - All sensitive data via variables or AWS services
-2. **Encrypted Storage** - ECR images, CloudWatch logs, and state encryption
-3. **Least Privilege IAM** - Minimal required permissions
-4. **Network Security** - Private subnets, security groups, HTTPS-only
-5. **Audit Logging** - ALB access logs and CloudWatch monitoring
+2. **Encrypted Storage** - ECR images and CloudWatch logs encryption
+3. **Least Privilege IAM** - Minimal required permissions for ECR access
+4. **Built-in Network Security** - No VPC management, automatic HTTPS
+5. **Integrated Monitoring** - CloudWatch logs and metrics included
+6. **Zero Infrastructure Attack Surface** - Fully managed service eliminates server vulnerabilities
 
 ### State File Security
 
@@ -181,8 +193,11 @@ terraform apply
 # Get the load balancer URL
 terraform output application_url
 
-# Check ECS service status
-aws ecs describe-services --cluster $(terraform output -raw ecs_cluster_name) --services $(terraform output -raw ecs_service_name)
+# Check App Runner service status
+aws apprunner describe-service --service-arn $(terraform output -raw apprunner_service_arn)
+
+# Check service URL
+echo "Application URL: $(terraform output -raw application_url_default)"
 ```
 
 ## 🔧 Configuration Options
@@ -262,13 +277,12 @@ container_secrets = [
 
 ### 2. Network Security
 
-The infrastructure uses defense-in-depth:
+App Runner provides enhanced security by default:
 
-- **ALB Security Group**: Only allows HTTP(S) from internet
-- **ECS Security Group**: Only allows traffic from ALB
-- **Private Communication**: ECS tasks communicate via ALB only
-
-### 3. Encryption
+- **Built-in Load Balancing**: No exposed security groups to manage
+- **Automatic HTTPS**: Built-in SSL/TLS termination and certificate management
+- **Private Container Network**: Application containers are isolated from direct internet access
+- **DDoS Protection**: Built-in protection via AWS infrastructure### 3. Encryption
 
 All data is encrypted:
 

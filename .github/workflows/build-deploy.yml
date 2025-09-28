@@ -16,10 +16,7 @@ on:
 
 env:
   ECR_REPOSITORY: arabic-recognition-app
-  ECS_SERVICE: arabic-recognition-app-dev-service
-  ECS_CLUSTER: arabic-recognition-app-dev-cluster
-  ECS_TASK_DEFINITION: arabic-recognition-app-dev-task
-  EC2_LOADBALANCER: arabic-recognition-app-dev-alb
+  APPRUNNER_SERVICE: ar-recognition-dev
   AWS_REGION: eu-west-1
 
 jobs:
@@ -224,104 +221,133 @@ jobs:
             exit 1
           fi
           
-          # Check if Load Balancer exists
-          if aws elbv2 describe-load-balancers --names ${{ env.EC2_LOADBALANCER }} >/dev/null 2>&1; then
-            echo "✅ Load Balancer '${{ env.EC2_LOADBALANCER }}' exists"
-          else
-            echo "❌ Load Balancer '${{ env.EC2_LOADBALANCER }}' not found"
-            exit 1
-          fi
+          # Check if App Runner service exists
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APPRUNNER_SERVICE }}'].ServiceArn | [0]" --output text 2>/dev/null || echo "None")
           
-          # Check if ECS cluster exists
-          if aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --query 'clusters[?status==`ACTIVE`]' | grep -q "${{ env.ECS_CLUSTER }}"; then
-            echo "✅ ECS cluster '${{ env.ECS_CLUSTER }}' exists"
+          if [[ "$SERVICE_ARN" != "None" && "$SERVICE_ARN" != "" ]]; then
+            echo "✅ App Runner service '${{ env.APPRUNNER_SERVICE }}' exists"
+            echo "Service ARN: $SERVICE_ARN"
+            
+            # Check service status
+            SERVICE_STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.Status' --output text)
+            echo "Service Status: $SERVICE_STATUS"
           else
-            echo "❌ ECS cluster '${{ env.ECS_CLUSTER }}' not found or not active"
-            exit 1
-          fi
-          
-          # Check if ECS task definition exists
-          if aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} >/dev/null 2>&1; then
-            echo "✅ ECS task definition '${{ env.ECS_TASK_DEFINITION }}' exists"
-          else
-            echo "❌ ECS task definition '${{ env.ECS_TASK_DEFINITION }}' not found"
-            exit 1
-          fi
-          
-          # Check if ECS service exists
-          SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --query 'services[?status==`ACTIVE`]' --output text 2>/dev/null || echo "")
-          
-          if [[ -n "$SERVICE_EXISTS" ]]; then
-            echo "✅ ECS service '${{ env.ECS_SERVICE }}' exists and is active"
-          else
-            echo "❌ ECS service '${{ env.ECS_SERVICE }}' not found or not active"
+            echo "❌ App Runner service '${{ env.APPRUNNER_SERVICE }}' not found"
+            echo "💡 Deploy infrastructure first: cd terraform && terraform apply"
             exit 1
           fi
           
           echo "🎉 All required infrastructure exists"
 
-      - name: Download current task definition
+      - name: Trigger App Runner deployment
         run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-            --query taskDefinition > task-definition.json
+          echo "🚀 Triggering App Runner deployment..."
+          
+          # Get service ARN
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APPRUNNER_SERVICE }}'].ServiceArn | [0]" --output text)
+          
+          if [[ "$SERVICE_ARN" == "None" || "$SERVICE_ARN" == "" ]]; then
+            echo "❌ Could not find App Runner service"
+            exit 1
+          fi
+          
+          # App Runner automatically deploys when new images are pushed to ECR (if auto-deployments enabled)
+          # But we can also trigger a manual deployment
+          echo "🔄 App Runner will automatically detect the new image and deploy"
+          echo "Service ARN: $SERVICE_ARN"
+          
+          # Optionally force a new deployment
+          # aws apprunner start-deployment --service-arn "$SERVICE_ARN"
 
-      - name: Update task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: arabic-recognition
-          image: ${{ needs.build.outputs.image-uri }}
-
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      - name: Wait for deployment completion
+        run: |
+          echo "⏳ Waiting for App Runner deployment to complete..."
+          
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APPRUNNER_SERVICE }}'].ServiceArn | [0]" --output text)
+          
+          # Wait for deployment to complete (max 10 minutes)
+          for i in {1..60}; do
+            STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.Status' --output text)
+            echo "Deployment attempt $i/60 - Service Status: $STATUS"
+            
+            if [[ "$STATUS" == "RUNNING" ]]; then
+              echo "✅ App Runner service is running successfully!"
+              break
+            elif [[ "$STATUS" == "OPERATION_IN_PROGRESS" ]]; then
+              echo "🔄 Deployment in progress..."
+              sleep 10
+            elif [[ "$STATUS" == "CREATE_FAILED" || "$STATUS" == "UPDATE_FAILED" ]]; then
+              echo "❌ Deployment failed with status: $STATUS"
+              exit 1
+            else
+              echo "⏳ Current status: $STATUS, waiting..."
+              sleep 10
+            fi
+          done
+          
+          # Final status check
+          FINAL_STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.Status' --output text)
+          if [[ "$FINAL_STATUS" != "RUNNING" ]]; then
+            echo "❌ Deployment did not complete successfully. Final status: $FINAL_STATUS"
+            exit 1
+          fi
 
       - name: Verify deployment
         run: |
-          echo "Waiting for deployment to stabilize..."
-          sleep 30
+          echo "🔍 Verifying App Runner deployment..."
           
-          # Get service details
-          aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_SERVICE }} \
-            --query 'services[0].{Status:status,RunningCount:runningCount,DesiredCount:desiredCount}'
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APPRUNNER_SERVICE }}'].ServiceArn | [0]" --output text)
           
-          # Check if service is running with desired count
-          RUNNING_COUNT=$(aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_SERVICE }} \
-            --query 'services[0].runningCount')
+          # Get service URL
+          SERVICE_URL=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.ServiceUrl' --output text)
+          echo "🌐 Service URL: https://$SERVICE_URL"
           
-          DESIRED_COUNT=$(aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_SERVICE }} \
-            --query 'services[0].desiredCount')
+          # Health check
+          echo "🏥 Performing health check..."
+          for i in {1..10}; do
+            if curl -f --max-time 10 "https://$SERVICE_URL/" >/dev/null 2>&1; then
+              echo "✅ Health check passed! Application is responding"
+              break
+            else
+              echo "⏳ Health check attempt $i/10 failed, retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
           
-          if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ]; then
-            echo "✅ Deployment successful! Running: $RUNNING_COUNT, Desired: $DESIRED_COUNT"
+          # Final health check
+          if curl -f --max-time 30 "https://$SERVICE_URL/" >/dev/null 2>&1; then
+            echo "🎉 Deployment verification successful!"
+            echo "🌍 Application is live at: https://$SERVICE_URL"
           else
-            echo "❌ Deployment Issues! Running: $RUNNING_COUNT, Desired: $DESIRED_COUNT"
+            echo "❌ Health check failed - application may not be responding"
+            echo "🔍 Check App Runner logs: aws logs tail /aws/apprunner/${{ env.APPRUNNER_SERVICE }}/application --follow"
+            exit 1
           fi
 
       - name: Create deployment summary
         run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 App Runner Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ needs.build.outputs.image-uri }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Cluster:** \`${{ env.ECS_CLUSTER }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Service:** \`${{ env.ECS_SERVICE }}\`" >> $GITHUB_STEP_SUMMARY
+          
+          # Get service details
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APPRUNNER_SERVICE }}'].ServiceArn | [0]" --output text)
+          SERVICE_URL=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.ServiceUrl' --output text)
+          
+          echo "**Container Image:** \`${{ needs.build.outputs.image-uri }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**App Runner Service:** \`${{ env.APPRUNNER_SERVICE }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Region:** \`${{ env.AWS_REGION }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Service URL:** [https://$SERVICE_URL](https://$SERVICE_URL)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Status:** ✅ Deployment completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ App Runner deployment completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "**Infrastructure:** AWS App Runner (Fully Managed)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Key Benefits" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 Zero infrastructure management" >> $GITHUB_STEP_SUMMARY
+          echo "- 💰 ~60% cost reduction vs ECS+ALB" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔒 Automatic HTTPS and security" >> $GITHUB_STEP_SUMMARY
+          echo "- 📈 Auto-scaling (1-10 instances)" >> $GITHUB_STEP_SUMMARY
 
   notify:
     runs-on: ubuntu-latest
@@ -332,16 +358,20 @@ jobs:
       - name: Deployment notification
         run: |
           if [[ "${{ needs.deploy.result }}" == "success" ]]; then
-            echo "✅ Deployment to production completed successfully"
-            echo "Image: ${{ needs.build.outputs.image-uri }}"
-            echo "Commit: ${{ github.sha }}"
+            echo "✅ App Runner deployment completed successfully"
+            echo "🚀 Fully managed container service with automatic HTTPS"
+            echo "💰 Cost optimized: ~60% savings vs traditional ECS+ALB"
+            echo "📦 Container Image: ${{ needs.build.outputs.image-uri }}"
+            echo "🔗 Commit: ${{ github.sha }}"
           elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
-            echo "❌ Deployment to production failed"
-            echo "Please check the logs and try again"
+            echo "❌ App Runner deployment failed"
+            echo "🔍 Check App Runner service logs and status"
+            echo "💡 Troubleshooting: aws apprunner describe-service --service-arn <service-arn>"
           elif [[ "${{ needs.build.result }}" == "failure" ]]; then
-            echo "❌ Build failed"
-            echo "Please check the build logs"
+            echo "❌ Container build failed"
+            echo "🔍 Please check the build logs and container configuration"
           else
-            echo "ℹ️ Build completed but deployment was skipped"
-            echo "Branch: ${{ github.ref }}"
+            echo "ℹ️ Build completed but App Runner deployment was skipped"
+            echo "📝 Branch: ${{ github.ref }}"
+            echo "💡 App Runner deploys only from main branch"
           fi

@@ -3,7 +3,7 @@
 > **Author:** Bilal Mustafa  
 > **Status:** ✅ Production Ready  
 > **Last Updated:** 28-09-2025  
-> **Live URL:** [LIVE URL](https://p3nsmqm8we.eu-west-1.awsapprunner.com/)  
+> **Live URL:** [LIVE URL](https://wzzm76qytg.eu-west-1.awsapprunner.com/)  
 > **Infrastructure:** AWS App Runner (Fully Managed Container Service)
 
 This is a web application that combines Arabic speech recognition with the [`quranic-universal-library`](https://github.com/TarteelAI/quranic-universal-library) GitHub library to provide access to Quranic text and metadata. The app allows users to speak in Arabic and have their speech recognized and processed.

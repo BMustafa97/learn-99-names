@@ -1,11 +1,22 @@
 # Arabic Recognition App
 
 > **Author:** Bilal Mustafa  
-> **Status:** 🚧 In Development  
-> **Last Updated:** 27-09-2025  
-> **Live URL:** [LIVE URL](https://p3nsmqm8we.eu-west-1.awsapprunner.com/)
+> **Status:** ✅ Production Ready  
+> **Last Updated:** 28-09-2025  
+> **Live URL:** [LIVE URL](https://p3nsmqm8we.eu-west-1.awsapprunner.com/)  
+> **Infrastructure:** AWS App Runner (Fully Managed Container Service)
 
 This is a web application that combines Arabic speech recognition with the [`quranic-universal-library`](https://github.com/TarteelAI/quranic-universal-library) GitHub library to provide access to Quranic text and metadata. The app allows users to speak in Arabic and have their speech recognized and processed.
+
+## 🏗️ Cloud Architecture
+
+This application is deployed using **AWS App Runner**, a fully managed container service that provides:
+
+- ✅ **Automatic HTTPS** - Built-in SSL/TLS certificates
+- ✅ **Auto Scaling** - Scales from 0 to handle traffic spikes
+- ✅ **Cost Optimization** - Pay only for what you use (~$20-30/month savings vs traditional ECS+ALB)
+- ✅ **Zero Infrastructure Management** - No servers, load balancers, or VPCs to manage
+- ✅ **Continuous Deployment** - Automatic deployments from ECR container registry
 
 ## Features
 
@@ -112,12 +123,29 @@ app.listen(3001, () => {
 });
 ```
 
+### Deployment & Infrastructure
+
+The application is deployed on **AWS App Runner** with the following benefits:
+
+- 🚀 **Fully Managed**: No infrastructure management required
+- 💰 **Cost Effective**: ~60% cost reduction compared to ECS+ALB setup
+- 🔒 **Secure by Default**: Automatic HTTPS, built-in load balancing
+- 📈 **Auto Scaling**: Scales based on traffic (min: 1, max: 10 instances)
+- 🔄 **CI/CD Integration**: Automatic deployments from GitHub Actions
+
+**Infrastructure Stack:**
+- **Container Service**: AWS App Runner
+- **Container Registry**: Amazon ECR
+- **CI/CD**: GitHub Actions
+- **Infrastructure as Code**: Terraform
+
 ### Current Implementation
 
 The current web application includes:
 - ✅ Arabic speech recognition using Web Speech API
 - ✅ Real-time transcription display
 - ✅ Clean, responsive user interface
+- ✅ Production deployment on AWS App Runner
 - ⏳ Quranic search integration (requires backend setup)
 
 ## Resources

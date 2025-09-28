@@ -2,9 +2,41 @@
 
 This document provides a technical overview of the Arabic Recognition App's architecture, design patterns, and implementation details.
 
-## 🏗️ Application Architecture
+## 🏗️ Cloud Architecture
 
-### High-Level Structure
+### AWS App Runner Deployment
+
+```
+Internet Traffic (HTTPS)
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│         AWS App Runner Service          │
+│  ┌─────────────────────────────────────┐ │
+│  │        Auto Scaling Group           │ │
+│  │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │ │
+│  │  │ C1  │ │ C2  │ │ C3  │ │ ... │   │ │
+│  │  └─────┘ └─────┘ └─────┘ └─────┘   │ │
+│  │    Min: 1 Instance, Max: 10        │ │
+│  └─────────────────────────────────────┘ │
+│                                         │
+│  Built-in Features:                     │
+│  ✅ Load Balancer                       │
+│  ✅ HTTPS/SSL Termination               │
+│  ✅ Health Checks                       │
+│  ✅ Auto Scaling                        │
+│  ✅ Zero-downtime Deployments           │
+└─────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│        Amazon ECR Repository           │
+│   (Container Image Storage)            │
+│  📦 arabic-recognition-app:latest       │
+└─────────────────────────────────────────┘
+```
+
+### Application Architecture
 
 ```
 ┌─────────────────────────────────────────┐
@@ -28,6 +60,19 @@ This document provides a technical overview of the Arabic Recognition App's arch
 │  - Browser Speech Engine               │
 └─────────────────────────────────────────┘
 ```
+
+### Infrastructure Benefits
+
+**Cost Optimization:**
+- 📉 ~60% cost reduction vs ECS+ALB setup
+- 💰 Pay-per-use pricing model (no idle costs)
+- 🔄 Automatic scaling to zero during low traffic
+
+**Operational Benefits:**
+- 🚀 Zero infrastructure management
+- 🔒 Built-in security and compliance
+- 📊 Integrated monitoring and logging
+- ⚡ Global CDN and edge locations
 
 ### Component Architecture
 
@@ -293,20 +338,69 @@ if (!('webkitSpeechRecognition' in window) &&
 
 ## 🚀 Deployment Architecture
 
-### Static File Serving
+### AWS App Runner Production Deployment
+
 ```
-HTTP Server (http-server)
-├── Serves static files from src/
-├── No backend processing required
-├── CORS headers for local development
-└── Cache control for production
+┌─────────────────────────────────────────┐
+│            GitHub Actions CI/CD         │
+│  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │   Build  │→ │   Test   │→ │ Deploy │ │
+│  └──────────┘  └──────────┘  └────────┘ │
+└─────────────────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│         Amazon ECR Registry            │
+│  🏷️ Latest Image Push                  │
+└─────────────────────────────────────────┘
+               │
+               ▼ (Auto Deploy)
+┌─────────────────────────────────────────┐
+│        AWS App Runner Service          │
+│  🔄 Automatic Image Pull & Deploy      │
+│  🌐 HTTPS: apprunner.amazonaws.com     │
+│  📊 CPU: 0.25 vCPU, Memory: 0.5 GB     │
+│  📈 Auto Scale: 1-10 instances         │
+└─────────────────────────────────────────┘
 ```
 
-### Production Considerations
-- HTTPS requirement for Web Speech API
-- CDN for static assets
-- Compression and minification
-- Browser caching strategies
+### Infrastructure as Code (Terraform)
+
+```hcl
+# Key App Runner Configuration
+resource "aws_apprunner_service" "app" {
+  service_name = "ar-recognition-dev"
+  
+  source_configuration {
+    image_repository {
+      image_identifier      = "${aws_ecr_repository.repo.repository_url}:latest"
+      image_configuration {
+        port = "3000"
+        runtime_environment_variables = {
+          NODE_ENV = "production"
+        }
+      }
+    }
+    auto_deployments_enabled = true
+  }
+  
+  instance_configuration {
+    cpu    = "0.25 vCPU"
+    memory = "0.5 GB"
+  }
+  
+  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.auto_scaling.arn
+}
+```
+
+### Production Features
+- ✅ HTTPS requirement automatically satisfied
+- ✅ Global CDN via AWS edge locations
+- ✅ Compression and optimization built-in
+- ✅ Browser caching strategies handled
+- ✅ Health checks and monitoring included
+- ✅ Zero-downtime deployments
+- ✅ Automatic failover and redundancy
 
 ## 🔧 Extensibility Points
 

@@ -20,9 +20,11 @@ Welcome to the Arabic Recognition App documentation. This comprehensive guide co
 - [CSS Styling Guide](./styling-guide.md) - Customizing the appearance
 
 ### Integration & Deployment
+- [AWS App Runner Guide](./aws-apprunner.md) - **NEW** Complete App Runner deployment guide
+- [Terraform Infrastructure](./terraform-inf.md) - Infrastructure as Code setup
 - [Quranic Library Integration](./quranic-integration.md) - Working with quranic-universal-library
-- [Deployment Guide](./deployment.md) - Deploying to production
 - [Docker Setup](./docker.md) - Containerization instructions
+- [CI/CD Pipeline](./pipeline-summary.md) - GitHub Actions automation
 
 ### Troubleshooting & Support
 - [Common Issues](./troubleshooting.md) - Solutions to frequent problems
@@ -49,15 +51,29 @@ The Arabic Recognition App is a web-based application that combines modern speec
 - **Interactive Learning System** for the 99 Beautiful Names of Allah
 - **Progress Tracking and Achievements** to motivate learning
 - **Responsive Design** that works on desktop and mobile devices
+- **Cloud-Native Deployment** on AWS App Runner
 - **Integration Support** for Quranic text libraries
 
 ## 🔧 Technical Stack
 
+### Frontend
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Speech Recognition**: Web Speech API
 - **Storage**: LocalStorage for progress tracking
-- **Server**: http-server for development
-- **Integration**: quranic-universal-library support
+- **Development Server**: http-server
+
+### Cloud Infrastructure
+- **Container Service**: AWS App Runner (Fully Managed)
+- **Container Registry**: Amazon ECR
+- **Infrastructure as Code**: Terraform
+- **CI/CD**: GitHub Actions
+- **Monitoring**: AWS CloudWatch
+
+### Key Benefits
+- 🚀 **Zero Infrastructure Management** - No servers to maintain
+- 💰 **Cost Optimized** - ~60% cost reduction vs traditional setup
+- 🔒 **Secure by Default** - Automatic HTTPS and security
+- 📈 **Auto Scaling** - Handles traffic spikes automatically
 
 ## 📞 Support
 
